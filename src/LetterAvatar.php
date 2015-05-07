@@ -61,6 +61,13 @@ class LetterAvatar
     private $textColor;
 
     /**
+     * Font Shadow
+     *
+     * @var boolean
+     */
+    private $fontShadow = false;
+
+    /**
      * Set max size
      *
      * @param int $maxSize
@@ -91,7 +98,7 @@ class LetterAvatar
      */
     public function getFontFile()
     {
-        if (!$this->fontFile) {
+        if ( ! $this->fontFile) {
             return __DIR__ . '/../fonts/OpenSans-Regular.ttf';
         }
 
@@ -175,17 +182,37 @@ class LetterAvatar
     }
 
     /**
+     * Set font shadow
+     *
+     * @param boolean $fontShadow
+     * @return $this
+     */
+    public function setFontShadow($fontShadow)
+    {
+        $this->fontShadow = $fontShadow;
+        return $this;
+    }
+
+    /**
      * Generate a letter avatar and return image content
      * Background color is picked randomly.
      *
-     * @param      $letter letter or a string (first char will be picked)
+     * @param $string a string (first char of each word will be picked, limit 2)
      * @param null $size
      * @return $this
      */
-    public function generate($letter, $size = null)
+    public function generate($string, $size = null)
     {
+        $words = explode(' ', $string);
+
+        $string = $words[0][0];
+
+        if (count($words) > 1)
+        {
+            $string.= $words[1][0];
+        }
         $this->createImage(
-            strtoupper($letter[0]),
+            strtoupper($string),
             $this->getBackgroundColor(),
             $this->getSize($size)
         );
@@ -234,27 +261,31 @@ class LetterAvatar
     }
 
     /**
-     * Generate letter image and return image
+     * Generate string image and return image
      *
-     * @param $letter
+     * @param $string
      * @param $color
      * @param $size
      * @return resource
      */
-    protected function createImage($letter, $color, $size)
+    protected function createImage($string, $color, $size)
     {
         $this->img = imagecreatetruecolor($size, $size);
-        $bgColor   = imagecolorallocate($this->img, $color[0], $color[2], $color[1]);
+        $bgColor = imagecolorallocate($this->img, $color[0], $color[2], $color[1]);
         imagefill($this->img, 0, 0, $bgColor);
 
         $box = new Box($this->img);
         $box->setFontFace($this->getFontFile());
         $box->setFontColor($this->getTextColor());
-        $box->setTextShadow(new Color(0, 0, 0, 50), 2, 2);
+        if ($this->fontShadow)
+        {
+            $box->setTextShadow(new Color(0, 0, 0, 50), 1, 1);
+        }
+        $textOffset = 0-$size*0.025;
         $box->setFontSize(round($size * $this->fontRatio));
-        $box->setBox(0, 0, $size, $size);
+        $box->setBox($textOffset, 0, $size, $size);
         $box->setTextAlign('center', 'center');
-        $box->draw($letter);
+        $box->draw($string);
     }
 
     /**
